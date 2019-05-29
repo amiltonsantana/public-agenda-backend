@@ -18,5 +18,9 @@
   "bugs": {
     "url": "https://github.com/amiltonsantana/issues-agenda/issues"
   },
-  "homepage": "https://github.com/amiltonsantana/issues-agenda#readme"
+  "homepage": "https://github.com/amiltonsantana/issues-agenda#readme",
+  "dependencies": {
+    "moment": "^2.24.0",
+    "node-telegram-bot-api": "^0.30.0"
+  }
 }
