@@ -1,0 +1,22 @@
+{
+  "name": "issues-agenda",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amiltonsantana/issues-agenda.git"
+  },
+  "keywords": [
+    "agenda"
+  ],
+  "author": "Amilton Santana",
+  "license": " GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/amiltonsantana/issues-agenda/issues"
+  },
+  "homepage": "https://github.com/amiltonsantana/issues-agenda#readme"
+}
