@@ -8,6 +8,8 @@ module.exports = {
 
 		const eventList = JSON.parse(fileBuffer)
 
+		const events = eventList.filter(event => moment(event.endDate).diff(moment()) > 0)
+
 		return events
 	}
 }
