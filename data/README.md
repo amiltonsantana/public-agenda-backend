@@ -6,7 +6,8 @@ File: `events.json`
 
 ```
 {
-	"date": "2019-06-01T13:00:00.000Z",
+	"initialDate": "2019-06-01T13:00:00.000Z",
+	"endDate": "2019-06-01T15:00:00.000Z",
 	"name": "Conselho Mirim na Câmara",
 	"description": "A proposta é uma iniciativa inédita do vereador Celso Giannazi, em parceria com o professor e deputado estadual Carlos Giannazi, e tem como premissa o respeito às ideias das crianças sobre a cidade, em especial sobre a escola e os equipamentos públicos hoje oferecidos à população.",
 	"place": "Câmara dos Vereadores",
