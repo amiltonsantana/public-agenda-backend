@@ -16,9 +16,7 @@ const loadJsonObject = (filePath) => {
 }
 
 const getEventList = () => {
-	const eventList = loadJsonObject(`${dataPath}/events.json`)
-
-	return eventList
+	return loadJsonObject(`${dataPath}/events.json`)
 }
 
 const saveUserState = (userState, userId, charId) => {
