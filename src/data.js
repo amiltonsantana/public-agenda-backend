@@ -1,15 +1,37 @@
 const fs = require('fs')
-const moment = require('moment')
+
+const dataPath = './data'
+
+const saveJsonObject = (content, filePath) => {
+	const contentString = JSON.stringify(content)
+	return fs.writeFileSync(filePath, contentString)
+}
+
+const loadJsonObject = (filePath) => {
+	if (fs.existsSync(filePath)) {
+		const fileBuffer = fs.readFileSync(filePath, 'utf-8')
+		return JSON.parse(fileBuffer)
+	}
+	return false
+}
+
+const getEventList = () => {
+	const eventList = loadJsonObject(`${dataPath}/events.json`)
+
+	return eventList
+}
+
+const saveUserState = (userState, userId, charId) => {
+	return saveJsonObject(userState, `${dataPath}/${userId}-${charId}-state.json`)
+}
+
+const loadUserState = (userId, chatId) => {
+	return loadJsonObject(`${dataPath}/${userId}-${chatId}-state.json`)
+}
 
 
 module.exports = {
-	eventList: () => {
-		const fileBuffer = fs.readFileSync('./data/events.json', 'utf-8')
-
-		const eventList = JSON.parse(fileBuffer)
-
-		const events = eventList.filter(event => moment(event.endDate).diff(moment()) > 0)
-
-		return events
-	}
+	getEventList,
+	saveUserState,
+	loadUserState
 }
