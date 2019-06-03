@@ -20,33 +20,7 @@ async function start() {
 		const userName = msg.from.first_name
 
 		if (msg.text.match(/\/eventos/)) {
-			console.log('> Buscando a Lista de Eventos.')
-			const eventList = event.getList()
-
-			if (eventList) {
-				console.log('> Criando um userState para esse usuário.')
-				const userState = state.createUserState(msg)
-
-				console.log('> Salvando o userState do usuário.')
-				state.saveUserState(userState)
-
-				console.log('> Buscando a lista de tags existentes nos eventos.');
-				const eventTags = event.listEventsTags(eventList)
-
-				console.log('> Transformando a lista de tags em opções de resposta.');
-				const replyMarkups = tagsToReplyMarkups(eventTags)
-				console.log(replyMarkups);
-
-				const message = `Olá ${userName}. Sobre qual tema você quer saber?`
-				bot.sendMessage(chatId, message, {
-					"reply_markup": {
-						"keyboard": replyMarkups
-					}
-				})
-			} else {
-				const message = `Olá ${userName}. No momento, não temos eventos cadastrados.`
-				bot.sendMessage(chatId, message)
-			}
+			askCurrentEventTags (msg, bot)
 		} else {
 			console.log('> Verificando se ja existe um userState para esse usuário.')
 			const userState = state.loadUserState(userId, chatId)
@@ -76,6 +50,37 @@ async function start() {
 		tags.forEach(tag => replyMarkups.push([tag]))
 
 		return replyMarkups
+	}
+
+	const askCurrentEventTags = (msg, bot) => {
+		console.log('> Criando um userState para esse usuário.')
+		const userState = state.createUserState(msg)
+
+		console.log('> Buscando a Lista de Eventos.')
+		const eventList = event.getList()
+
+		if (eventList) {
+
+			console.log('> Salvando o userState do usuário.')
+			state.saveUserState(userState)
+
+			console.log('> Buscando a lista de tags existentes nos eventos.');
+			const eventTags = event.listEventsTags(eventList)
+
+			console.log('> Transformando a lista de tags em opções de resposta.');
+			const replyMarkups = tagsToReplyMarkups(eventTags)
+			console.log(replyMarkups);
+
+			const message = `Olá ${userState.user.first_name}. Sobre qual tema você quer saber?`
+			bot.sendMessage(userState.chat.id, message, {
+				"reply_markup": {
+					"keyboard": replyMarkups
+				}
+			})
+		} else {
+			const message = `Olá ${userState.chat.id}. No momento, não temos eventos cadastrados.`
+			bot.sendMessage(userState.chat.id, message)
+		}
 	}
 
 	const sendEventListByTag = async (eventTag, bot, userState) => {
