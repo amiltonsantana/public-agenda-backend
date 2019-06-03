@@ -10,7 +10,7 @@ const createUserState = (msg) => {
 		date: moment(),
 		context: {
 			subject: msg.text,
-			child: {}
+			children: []
 		}
 	}
 }
