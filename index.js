@@ -18,7 +18,6 @@ async function start() {
 		// console.log(msg)
 
 		const userId = msg.from.id
-		const chatId = msg.chat.id
 		const userName = msg.from.first_name
 
 		if (msg.text.match(/\/eventos/)) {
@@ -27,7 +26,7 @@ async function start() {
 			askSubscriptionTags(msg, bot)
 		} else {
 			console.log('> Verificando se ja existe um userState para esse usuário.')
-			const userState = state.loadUserState(userId, chatId)
+			const userState = state.loadUserState(userId, msg.chat.id)
 
 			if (userState && userState.context && userState.context.subject == '/eventos') {
 				console.log(`> Ja existe um userState para esse usuário. Subject '/eventos'`)
@@ -36,49 +35,75 @@ async function start() {
 				const reply = userState.context.children.find(child => child.message_id == msg.reply_to_message.message_id)
 				if (msg.reply_to_message && reply && msg.text.match(/mais detalhes/)) {
 					console.log('> Exibindo mais detalhes sobre o evento desejado.')
-					bot.sendMessage(chatId, reply.reply_text)
+					bot.sendMessage(userState.chat.id, reply.reply_text)
 
 				} else {
 					sendEventListByTag(msg.text, bot, userState)
 				}
 			} else if (userState && userState.context && userState.context.subject == '/alertas') {
 				console.log(`> Ja existe um userState para esse usuário. Subject '/alertas'`)
+				const subscriptionTag = msg.text
 
 				console.log('> Verificando se a informação enviada pelo usuário é uma tag válida.')
 				const tagList = tag.getList()
-				if (tagList.find(tag => tag == msg.text)) {
+				if (tagList.find(tag => tag == subscriptionTag)) {
 
-					const userSubscription = subscription.findByUserId(userState.user.id)
+					let userSubscription = subscription.findByUserId(userState.user.id)
 
-					if (userSubscription && userSubscription.tags.find(tag => tag == msg.text)) {
-						const message = `${userState.user.first_name}, você já cadastrou alertas para os eventos do tema #${msg.text}.`
-						await bot.sendMessage(userState.chat.id, message, {
+					if (userSubscription && userSubscription.tags.find(tag => tag == subscriptionTag)) {
+						const message = `${userState.user.first_name}, você já cadastrou alertas para os eventos do tema #${subscriptionTag}.`
+						bot.sendMessage(userState.chat.id, message, {
 							"reply_markup": {
 								"remove_keyboard": true
 							}
 						})
 					} else {
+						if (!userSubscription) {
+							userSubscription = subscription.create(userState.user)
+						}
 						console.log('> Adicionando a tag na userSubscription.')
-						subscription.pushTag(userState.user, msg.text)
+						console.log(userSubscription)
+						if (subscription.addTag(userSubscription, subscriptionTag)) {
+							console.log(`> Adicionando os eventos da tag '${subscriptionTag}' na userSubscription.`)
+							const events = event.findEventsByTag(subscriptionTag)
+							console.log(`> Eventos: '${events}'`);
 
-						const message = `Pronto. Enviarei alertas para os eventos do tema #${msg.text}.`
-						await bot.sendMessage(userState.chat.id, message, {
-							"reply_markup": {
-								"remove_keyboard": true
+
+							if (subscription.addEvents(userSubscription, events)) {
+								const message = `Pronto. Enviarei alertas para os eventos do tema #${subscriptionTag}.`
+								bot.sendMessage(userState.chat.id, message, {
+									"reply_markup": {
+										"remove_keyboard": true
+									}
+								})
+							} else {
+								sendErrorMessage(bot, userState.chat.id)
 							}
-						})
+
+						} else {
+							sendErrorMessage(bot, userState.chat.id)
+						}
 					}
 
 				} else {
-					const message = `${userName}, o tema ${msg.text} não existe.`
-					bot.sendMessage(chatId, message)
+					const message = `${userName}, o tema ${subscriptionTag} não existe.`
+					bot.sendMessage(userState.chat.id, message)
 				}
 			} else {
 				const message = `Não entendi ${userName}. O que você deseja saber?`
-				bot.sendMessage(chatId, message)
+				bot.sendMessage(msg.chat.id, message)
 			}
 		}
 	})
+
+	const sendErrorMessage = (bot, chatId) => {
+		const message = `Puts. Tive um probleminha. Poderia tentar mais tarde?.`
+		bot.sendMessage(chatId, message, {
+			"reply_markup": {
+				"remove_keyboard": true
+			}
+		})
+	}
 
 	const askCurrentEventTags = (msg, bot) => {
 		console.log('> Criando um userState para esse usuário.')

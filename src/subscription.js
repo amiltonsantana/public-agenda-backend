@@ -6,7 +6,26 @@ const data = require('./data')
 const create = (user) => ({
 	user: user,
 	creationDate: moment(),
-	tags: []
+	tags: [],
+	subscriptionEvents: []
+})
+
+const createSubscriptionEvent = (event) => ({
+	event,
+	alerts: [
+		{
+			time: 1,
+			messageSent: false
+		},
+		{
+			time: 7,
+			messageSent: false
+		},
+		{
+			time: 30,
+			messageSent: false
+		}
+	]
 })
 
 const get = () => {
@@ -25,12 +44,17 @@ const findIndexByUserId = (userId) => {
 	return subscriptions.findIndex(userSubscription => userSubscription.user.id == userId)
 }
 
-const insert = (userSubscription) => {
+const add = (userSubscription) => {
+	if (!userSubscription || !userSubscription.user) {
+		return false
+	}
 	const subscriptions = get()
 
-	const userSubscriptionIndex =  subscriptions.findIndex(subscription => subscription.user.id == userSubscription.user.id)
+	const userSubscriptionIndex = subscriptions.findIndex(subscription => subscription.user.id == userSubscription.user.id)
 
-	if (userSubscriptionIndex == -1) {
+	userSubscription.lastUpdateDate = moment()
+
+	if (userSubscriptionIndex === -1) {
 		subscriptions.push(userSubscription)
 	} else {
 		subscriptions[userSubscriptionIndex] = userSubscription
@@ -39,25 +63,43 @@ const insert = (userSubscription) => {
 	data.saveSubscription(subscriptions)
 }
 
-const pushTag = (user, tag) => {
-	let userSubscription = find(user.id)
+const addTag = (userSubscription, tag) => {
+	if (!tag) return false
+
 	if (!userSubscription) {
 		userSubscription = create(user)
 	}
 
-	console.log(userSubscription.tags);
-
 	userSubscription.tags.push(tag)
 	userSubscription.tags = [...new Set(userSubscription.tags)]
-	userSubscription.lastUpdateDate = moment()
 
-	console.log(userSubscription.tags);
+	add(userSubscription)
 
-	insert(userSubscription)
+	return true
+}
+
+const addEvents = (userSubscription, events) => {
+	if (!userSubscription) {
+		return false
+	}
+
+	events.forEach(event => {
+		const subscriptionEventIndex = userSubscription.subscriptionEvents.findIndex(subscriptionEvent => subscriptionEvent.event.id == event.id)
+
+		if (subscriptionEventIndex === -1) {
+			userSubscription.subscriptionEvents.push(createSubscriptionEvent(event))
+		}
+
+	})
+
+	add(userSubscription)
+
+	return true
 }
 
 module.exports = {
 	create,
 	findByUserId,
-	pushTag
+	addTag,
+	addEvents
 }
