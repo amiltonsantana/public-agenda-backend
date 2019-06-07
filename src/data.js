@@ -36,11 +36,11 @@ const saveTagList = (tagList) => {
 }
 
 const loadSubscription = () => {
-	return loadJsonObject(`${DATA_PATH}/subscription.json`)
+	return loadJsonObject(`${DATA_PATH}/subscriptions.json`)
 }
 
 const saveSubscription  = (subscription) => {
-	saveJsonObject(subscription, `${DATA_PATH}/subscription.json`)
+	saveJsonObject(subscription, `${DATA_PATH}/subscriptions.json`)
 }
 
 module.exports = {
