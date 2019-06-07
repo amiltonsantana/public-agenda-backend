@@ -42,53 +42,7 @@ async function start() {
 				}
 			} else if (userState && userState.context && userState.context.subject == '/alertas') {
 				console.log(`> Ja existe um userState para esse usuário. Subject '/alertas'`)
-				const subscriptionTag = msg.text
-
-				console.log('> Verificando se a informação enviada pelo usuário é uma tag válida.')
-				const tagList = tag.getList()
-				if (tagList.find(tag => tag == subscriptionTag)) {
-
-					let userSubscription = subscription.findByUserId(userState.user.id)
-
-					if (userSubscription && userSubscription.tags.find(tag => tag == subscriptionTag)) {
-						const message = `${userState.user.first_name}, você já cadastrou alertas para os eventos do tema #${subscriptionTag}.`
-						bot.sendMessage(userState.chat.id, message, {
-							"reply_markup": {
-								"remove_keyboard": true
-							}
-						})
-					} else {
-						if (!userSubscription) {
-							userSubscription = subscription.create(userState.user)
-						}
-						console.log('> Adicionando a tag na userSubscription.')
-						console.log(userSubscription)
-						if (subscription.addTag(userSubscription, subscriptionTag)) {
-							console.log(`> Adicionando os eventos da tag '${subscriptionTag}' na userSubscription.`)
-							const events = event.findEventsByTag(subscriptionTag)
-							console.log(`> Eventos: '${events}'`);
-
-
-							if (subscription.addEvents(userSubscription, events)) {
-								const message = `Pronto. Enviarei alertas para os eventos do tema #${subscriptionTag}.`
-								bot.sendMessage(userState.chat.id, message, {
-									"reply_markup": {
-										"remove_keyboard": true
-									}
-								})
-							} else {
-								sendErrorMessage(bot, userState.chat.id)
-							}
-
-						} else {
-							sendErrorMessage(bot, userState.chat.id)
-						}
-					}
-
-				} else {
-					const message = `${userName}, o tema ${subscriptionTag} não existe.`
-					bot.sendMessage(userState.chat.id, message)
-				}
+				handleSubscriptionTag(msg.text, bot, userState)
 			} else {
 				const message = `Não entendi ${userName}. O que você deseja saber?`
 				bot.sendMessage(msg.chat.id, message)
@@ -219,6 +173,54 @@ async function start() {
 			}
 		} else {
 			const message = `Olá ${userState.user.first_name}. No momento, não temos eventos cadastrados.`
+			bot.sendMessage(userState.chat.id, message)
+		}
+	}
+
+	const handleSubscriptionTag = (subscriptionTag, bot, userState) => {
+
+		console.log('> Verificando se a informação enviada pelo usuário é uma tag válida.')
+		const tagList = tag.getList()
+		if (tagList.find(tag => tag == subscriptionTag)) {
+
+			let userSubscription = subscription.findByUserId(userState.user.id)
+
+			if (userSubscription && userSubscription.tags.find(tag => tag == subscriptionTag)) {
+				const message = `${userState.user.first_name}, você já cadastrou alertas para os eventos do tema #${subscriptionTag}.`
+				bot.sendMessage(userState.chat.id, message, {
+					"reply_markup": {
+						"remove_keyboard": true
+					}
+				})
+			} else {
+				if (!userSubscription) {
+					userSubscription = subscription.create(userState.user)
+				}
+				console.log('> Adicionando a tag na userSubscription.')
+				if (subscription.addTag(userSubscription, subscriptionTag)) {
+					console.log(`> Adicionando os eventos da tag '${subscriptionTag}' na userSubscription.`)
+					const events = event.findEventsByTag(subscriptionTag)
+					console.log(`> Eventos: '${events}'`);
+
+
+					if (subscription.addEvents(userSubscription, events)) {
+						const message = `Pronto. Enviarei alertas para os eventos do tema #${subscriptionTag}.`
+						bot.sendMessage(userState.chat.id, message, {
+							"reply_markup": {
+								"remove_keyboard": true
+							}
+						})
+					} else {
+						sendErrorMessage(bot, userState.chat.id)
+					}
+
+				} else {
+					sendErrorMessage(bot, userState.chat.id)
+				}
+			}
+
+		} else {
+			const message = `${userName}, o tema ${subscriptionTag} não existe.`
 			bot.sendMessage(userState.chat.id, message)
 		}
 	}
