@@ -97,9 +97,37 @@ const addEvents = (userSubscription, events) => {
 	return true
 }
 
+const removeSubscriptionEvent = (userSubscription, subscriptionEvent) => {
+	if (!userSubscription || !subscriptionEvent) {
+		return false
+	}
+
+	return removeEvent(userSubscription, subscriptionEvent.event)
+}
+
+const removeEvent = (userSubscription, event) => {
+	if (!userSubscription || !event) {
+		return false
+	}
+
+	const index = userSubscription.subscriptionEvents.findIndex(se => se.event.id == event.id)
+
+	if (index === -1) {
+		return false
+	}
+	userSubscription.subscriptionEvents.splice(index, 1)
+
+	add(userSubscription)
+
+	return true
+}
+
 module.exports = {
 	create,
+	get,
+	add,
 	findByUserId,
 	addTag,
-	addEvents
+	addEvents,
+	removeSubscriptionEvent
 }
