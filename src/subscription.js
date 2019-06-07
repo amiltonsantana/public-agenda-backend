@@ -29,7 +29,13 @@ const createSubscriptionEvent = (event) => ({
 })
 
 const get = () => {
-	return data.loadSubscription()
+	let subscriptions = data.loadSubscription()
+
+	if (!subscriptions) {
+		return []
+	}
+
+	return subscriptions
 }
 
 const findByUserId = (userId) => {
