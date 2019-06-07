@@ -21,36 +21,41 @@ async function start() {
 		const userName = msg.from.first_name
 
 		if (msg.text.match(/\/eventos/)) {
-			askCurrentEventTags(msg, bot)
+			askCurrentEventTags(msg)
 		} else if (msg.text.match(/\/alertas/)) {
-			askSubscriptionTags(msg, bot)
+			askSubscriptionTags(msg)
 		} else {
 			console.log('> Verificando se ja existe um userState para esse usuário.')
 			const userState = state.loadUserState(userId, msg.chat.id)
 
-			if (userState && userState.context && userState.context.subject == '/eventos') {
-				console.log(`> Ja existe um userState para esse usuário. Subject '/eventos'`)
-
-				console.log('> Verificando se o usuário deseja mais detalhes sobre um evento.')
-				const reply = userState.context.children.find(child => child.message_id == msg.reply_to_message.message_id)
-				if (msg.reply_to_message && reply && msg.text.match(/mais detalhes/)) {
-					console.log('> Exibindo mais detalhes sobre o evento desejado.')
-					bot.sendMessage(userState.chat.id, reply.reply_text)
-
-				} else {
-					sendEventListByTag(msg.text, bot, userState)
+			if (userState) {
+				console.log(`> Ja existe um userState para esse usuário.`)
+				let replyMsg
+				if (msg.reply_to_message) {
+					replyMsg = userState.importantMessages.find(iMsg => iMsg.message.message_id == msg.reply_to_message.message_id)
 				}
-			} else if (userState && userState.context && userState.context.subject == '/alertas') {
-				console.log(`> Ja existe um userState para esse usuário. Subject '/alertas'`)
-				handleSubscriptionTag(msg.text, bot, userState)
+
+				if (replyMsg && msg.text.match(/mais detalhes/)) {
+					console.log('> Exibindo mais detalhes sobre o evento desejado.')
+					bot.sendMessage(userState.chat.id, replyMsg.event.description)
+				} else if (userState.context.subject == '/eventos') {
+					console.log(`> Subject '/eventos'`)
+					sendEventListByTag(msg.text, userState)
+				} else if (userState.context.subject == '/alertas') {
+					console.log(`> Subject '/alertas'`)
+					handleSubscriptionTag(msg.text, userState)
+				} else {
+					const message = `Não entendi ${userName}. O que você deseja saber?`
+					bot.sendMessage(msg.chat.id, message)
+				}
 			} else {
-				const message = `Não entendi ${userName}. O que você deseja saber?`
+				const message = `Olá ${userName}. O que você deseja saber?`
 				bot.sendMessage(msg.chat.id, message)
 			}
 		}
 	})
 
-	const sendErrorMessage = (bot, chatId) => {
+	const sendErrorMessage = (chatId) => {
 		const message = `Puts. Tive um probleminha. Poderia tentar mais tarde?.`
 		bot.sendMessage(chatId, message, {
 			"reply_markup": {
@@ -59,7 +64,7 @@ async function start() {
 		})
 	}
 
-	const askCurrentEventTags = (msg, bot) => {
+	const askCurrentEventTags = (msg) => {
 		console.log('> Criando um userState para esse usuário.')
 		const userState = state.createUserState(msg)
 
@@ -93,7 +98,7 @@ async function start() {
 		}
 	}
 
-	const askSubscriptionTags = (msg, bot) => {
+	const askSubscriptionTags = (msg) => {
 		console.log('> Criando um userState para esse usuário.')
 		const userState = state.createUserState(msg)
 
@@ -124,7 +129,7 @@ async function start() {
 		return replyMarkups
 	}
 
-	const sendEventListByTag = async (searchTag, bot, userState) => {
+	const sendEventListByTag = async (searchTag, userState) => {
 		console.log('> Buscando a lista de eventos.');
 		const eventList = event.getList()
 
@@ -154,11 +159,9 @@ async function start() {
 					bot.sendMessage(userState.chat.id, eventMsg, {
 						parse_mode: "HTML",
 					}).then(res => {
-						const child = {
-							message_id: res.message_id,
-							reply_text: event.description
-						}
-						userState.context.children.push(child)
+						const importantMessage = state.createImportantMessage(res, event)
+
+						userState.importantMessages.push(importantMessage)
 
 						state.saveUserState(userState)
 					})
@@ -177,7 +180,7 @@ async function start() {
 		}
 	}
 
-	const handleSubscriptionTag = (subscriptionTag, bot, userState) => {
+	const handleSubscriptionTag = (subscriptionTag, userState) => {
 
 		console.log('> Verificando se a informação enviada pelo usuário é uma tag válida.')
 		const tagList = tag.getList()
@@ -224,6 +227,8 @@ async function start() {
 			bot.sendMessage(userState.chat.id, message)
 		}
 	}
+
+	// const sendEventDetail = (bot, )
 }
 
 start()
