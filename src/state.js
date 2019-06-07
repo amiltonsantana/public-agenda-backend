@@ -3,17 +3,21 @@ moment.locale('pt-br')
 
 const data = require('./data')
 
-const createUserState = (msg) => {
-	return {
-		user: msg.from,
-		chat: msg.chat,
-		date: moment(),
-		context: {
-			subject: msg.text,
-			children: []
-		}
-	}
-}
+const createUserState = (msg) => ({
+	user: msg.from,
+	chat: msg.chat,
+	date: moment(),
+	context: {
+		subject: msg.text,
+		children: []
+	},
+	importantMessages: []
+})
+
+const createImportantMessage = (msg, event) => ({
+	message: {message_id, chat, date, text, entities} = msg,
+	event
+})
 
 const saveUserState = (userState) => {
 	if (userState.user.id) {
@@ -29,6 +33,7 @@ const loadUserState = (userId, chatId) => {
 
 module.exports = {
 	createUserState,
+	createImportantMessage,
 	saveUserState,
 	loadUserState
 }
