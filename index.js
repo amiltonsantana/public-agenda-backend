@@ -200,27 +200,21 @@ async function start() {
 				if (subscription.addTag(userSubscription, subscriptionTag)) {
 					console.log(`> Adicionando os eventos da tag '${subscriptionTag}' na userSubscription.`)
 					const events = event.findEventsByTag(subscriptionTag)
-					console.log(`> Eventos: '${events}'`);
 
-
-					if (subscription.addEvents(userSubscription, events)) {
-						const message = `Pronto. Enviarei alertas para os eventos do tema #${subscriptionTag}.`
-						bot.sendMessage(userState.chat.id, message, {
-							"reply_markup": {
-								"remove_keyboard": true
-							}
-						})
-					} else {
-						sendErrorMessage(bot, userState.chat.id)
-					}
-
+					subscription.addEvents(userSubscription, events)
+					const message = `Pronto. Enviarei alertas para os eventos do tema #${subscriptionTag}.`
+					bot.sendMessage(userState.chat.id, message, {
+						"reply_markup": {
+							"remove_keyboard": true
+						}
+					})
 				} else {
 					sendErrorMessage(bot, userState.chat.id)
 				}
 			}
 
 		} else {
-			const message = `${userName}, o tema ${subscriptionTag} não existe.`
+			const message = `${userState.user.first_name}, o tema ${subscriptionTag} não existe.`
 			bot.sendMessage(userState.chat.id, message)
 		}
 	}

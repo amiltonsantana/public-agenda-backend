@@ -85,7 +85,7 @@ const addTag = (userSubscription, tag) => {
 }
 
 const addEvents = (userSubscription, events) => {
-	if (!userSubscription) {
+	if (!userSubscription || !events || !events.length) {
 		return false
 	}
 
