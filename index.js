@@ -37,6 +37,8 @@ async function start() {
 
 				if (replyMsg && msg.text.match(/mais detalhes/)) {
 					sendEventDetail(replyMsg.event, userState)
+				} else if (replyMsg && msg.text.match(/receber alertas/)) {
+					handleSubscriptionEvent(replyMsg.event, userState)
 				} else if (userState.context.subject == '/eventos') {
 					sendEventListByTag(msg.text, userState)
 				} else if (userState.context.subject == '/alertas') {
@@ -167,6 +169,8 @@ async function start() {
 				message = `Se quiser saber mais detalhes de algum evento, basta responder o evento desejado com o mensagem 'mais detalhes'.`
 				bot.sendMessage(userState.chat.id, message)
 
+				message = `Se quiser receber alertas de algum evento, basta responder o evento desejado com o mensagem 'receber alertas'.`
+				bot.sendMessage(userState.chat.id, message)
 			} else {
 				const message = `${userState.user.first_name}. No momento, não temos eventos cadastrados com o tema '#${searchTag}'.`
 				bot.sendMessage(userState.chat.id, message)
@@ -200,8 +204,8 @@ async function start() {
 				if (subscription.addTag(userSubscription, subscriptionTag)) {
 					console.log(`> Adicionando os eventos da tag '${subscriptionTag}' na userSubscription.`)
 					const events = event.findEventsByTag(subscriptionTag)
-
 					subscription.addEvents(userSubscription, events)
+
 					const message = `Pronto. Enviarei alertas para os eventos do tema #${subscriptionTag}.`
 					bot.sendMessage(userState.chat.id, message, {
 						"reply_markup": {
@@ -225,6 +229,27 @@ async function start() {
 
 	}
 
+	const handleSubscriptionEvent = (event, userState) => {
+		console.log('> Cadastrando o evento no subscription do usuário.')
+
+		let userSubscription = subscription.findByUserId(userState.user.id)
+
+		if (!userSubscription) {
+			userSubscription = subscription.create(userState.user)
+		}
+		if (userSubscription && userSubscription.subscriptionEvents.find(subEvent => subEvent.event.id == event.id)) {
+			const message = `${userState.user.first_name}, você já cadastrou alertas para o evento '${event.name}'.`
+			bot.sendMessage(userState.chat.id, message)
+		} else {
+			if (subscription.addEvent(userSubscription, event)) {
+				const message = `Pronto. Enviarei alertas para o evento '${event.name}.`
+				bot.sendMessage(userState.chat.id, message)
+			} else {
+				sendErrorMessage(bot, userState.chat.id)
+			}
+		}
+
+	}
 }
 
 start()
