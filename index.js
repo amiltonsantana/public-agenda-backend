@@ -62,14 +62,22 @@ async function start() {
 	}
 
 	const askCurrentEventTags = (msg) => {
-		console.log('> Criando um userState para esse usuário.')
-		const userState = state.createUserState(msg)
+		console.log('> Verificando se ja existe um userState para esse usuário.')
+		let userState = state.getUserState(msg.from.id, msg.chat.id)
+
+		if (!userState) {
+			console.log('> Criando um userState para esse usuário.')
+			userState = state.createUserState(msg)
+		} else {
+			console.log('> Limpando o context do userState desse usuário.')
+			userState.context.subject = msg.text,
+			userState.context.children = []
+		}
 
 		console.log('> Buscando a Lista de Eventos.')
 		const eventList = event.getList()
 
 		if (eventList) {
-
 			console.log('> Salvando o userState do usuário.')
 			state.saveUserState(userState)
 
@@ -96,8 +104,17 @@ async function start() {
 	}
 
 	const askSubscriptionTags = (msg) => {
-		console.log('> Criando um userState para esse usuário.')
-		const userState = state.createUserState(msg)
+		console.log('> Verificando se ja existe um userState para esse usuário.')
+		let userState = state.getUserState(msg.from.id, msg.chat.id)
+
+		if (!userState) {
+			console.log('> Criando um userState para esse usuário.')
+			userState = state.createUserState(msg)
+		} else {
+			console.log('> Limpando o context do userState desse usuário.')
+			userState.context.subject = msg.text,
+			userState.context.children = []
+		}
 
 		console.log('> Salvando o userState do usuário.')
 		state.saveUserState(userState)
