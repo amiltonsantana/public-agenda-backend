@@ -26,7 +26,7 @@ async function start() {
 			askSubscriptionTags(msg)
 		} else {
 			console.log('> Verificando se ja existe um userState para esse usuário.')
-			const userState = state.loadUserState(userId, msg.chat.id)
+			const userState = state.getUserState(userId, msg.chat.id)
 
 			if (userState) {
 				console.log(`> Ja existe um userState para esse usuário.`)
@@ -36,13 +36,10 @@ async function start() {
 				}
 
 				if (replyMsg && msg.text.match(/mais detalhes/)) {
-					console.log('> Exibindo mais detalhes sobre o evento desejado.')
-					bot.sendMessage(userState.chat.id, replyMsg.event.description)
+					sendEventDetail(replyMsg.event, userState)
 				} else if (userState.context.subject == '/eventos') {
-					console.log(`> Subject '/eventos'`)
 					sendEventListByTag(msg.text, userState)
 				} else if (userState.context.subject == '/alertas') {
-					console.log(`> Subject '/alertas'`)
 					handleSubscriptionTag(msg.text, userState)
 				} else {
 					const message = `Não entendi ${userName}. O que você deseja saber?`
@@ -228,7 +225,12 @@ async function start() {
 		}
 	}
 
-	// const sendEventDetail = (bot, )
+	const sendEventDetail = (event, userState) => {
+		console.log('> Exibindo mais detalhes sobre o evento desejado.')
+		bot.sendMessage(userState.chat.id, event.description)
+
+	}
+
 }
 
 start()

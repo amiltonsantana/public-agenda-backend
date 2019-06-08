@@ -20,14 +20,14 @@ const createImportantMessage = (msg, event) => ({
 })
 
 const saveUserState = (userState) => {
-	if (userState.user.id) {
+	if (userState.user && userState.user.id && userState.chat && userState.chat.id) {
 		return data.saveUserState(userState, userState.user.id, userState.chat.id)
 	} else {
 		return false
 	}
 }
 
-const loadUserState = (userId, chatId) => {
+const getUserState = (userId, chatId) => {
 	return data.loadUserState(userId, chatId)
 }
 
@@ -35,5 +35,5 @@ module.exports = {
 	createUserState,
 	createImportantMessage,
 	saveUserState,
-	loadUserState
+	getUserState
 }
