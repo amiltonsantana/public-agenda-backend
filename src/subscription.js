@@ -95,12 +95,19 @@ const addEvents = (userSubscription, events) => {
 		if (subscriptionEventIndex === -1) {
 			userSubscription.subscriptionEvents.push(createSubscriptionEvent(event))
 		}
-
 	})
 
 	add(userSubscription)
 
 	return true
+}
+
+const addEvent = (userSubscription, event) => {
+	if (!userSubscription || !event) {
+		return false
+	}
+
+	return addEvents(userSubscription, [event])
 }
 
 const removeSubscriptionEvent = (userSubscription, subscriptionEvent) => {
@@ -135,5 +142,6 @@ module.exports = {
 	findByUserId,
 	addTag,
 	addEvents,
+	addEvent,
 	removeSubscriptionEvent
 }
