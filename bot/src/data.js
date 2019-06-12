@@ -1,6 +1,6 @@
 const fs = require('fs')
 
-const DATA_PATH = './data'
+const DATA_PATH = '../data'
 
 const saveJsonObject = (content, filePath) => {
 	const contentString = JSON.stringify(content)

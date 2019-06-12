@@ -19,6 +19,7 @@ async function start() {
 
 		const userId = msg.from.id
 		const userName = msg.from.first_name
+		const chatId = msg.chat.id
 
 		if (msg.text.match(/\/eventos/)) {
 			askCurrentEventTags(msg)
@@ -26,7 +27,7 @@ async function start() {
 			askSubscriptionTags(msg)
 		} else {
 			console.log('> Verificando se ja existe um userState para esse usuário.')
-			const userState = state.getUserState(userId, msg.chat.id)
+			const userState = state.getUserState(userId, chatId)
 
 			if (userState) {
 				console.log(`> Ja existe um userState para esse usuário.`)
@@ -45,11 +46,11 @@ async function start() {
 					handleSubscriptionTag(msg.text, userState)
 				} else {
 					const message = `Não entendi ${userName}. O que você deseja saber?`
-					bot.sendMessage(msg.chat.id, message)
+					bot.sendMessage(chatId, message)
 				}
 			} else {
 				const message = `Olá ${userName}. O que você deseja saber?`
-				bot.sendMessage(msg.chat.id, message)
+				bot.sendMessage(chatId, message)
 			}
 		}
 	})
@@ -168,7 +169,9 @@ async function start() {
 				})
 
 				events.forEach((event) => {
-					let eventMsg = `${moment(event.initialDate).format('LLLL')} até às ${moment(event.endDate).format('LT')} terá o evento '${event.name}'`
+					let eventMsg = `${moment(event.initialDate).format('LLLL')} até às ${moment(event.endDate).format('LT')} `
+					eventMsg += `terá o evento '${event.name}' `
+					eventMsg += `(<b>${moment(event.initialDate).fromNow()}</b>)`
 					eventMsg += `\n<b>Local</b>: ${event.place}`
 					eventMsg += `\n<b>Endereço:</b> ${event.address}`
 
