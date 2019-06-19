@@ -1,1 +1,1 @@
-# issues-agenda
+# public-agenda
