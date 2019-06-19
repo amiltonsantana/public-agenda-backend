@@ -1,19 +1,16 @@
-const data = require('./data')
+const data = require('./data');
 
-const getList = () => {
-	return data.getTagList()
-}
+const getList = () => data.getTagList();
 
 const updateTagList = (newTagList) => {
+  const tagList = getList();
 
-	let tagList = getList()
+  tagList.push(...newTagList);
 
-	tagList.push(...newTagList)
-
-	return data.saveTagList([...new Set(tagList)])
-}
+  return data.saveTagList([...new Set(tagList)]);
+};
 
 module.exports = {
-	getList,
-	updateTagList
-}
+  getList,
+  updateTagList,
+};
