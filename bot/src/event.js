@@ -1,15 +1,3 @@
-const moment = require('moment');
-
-const data = require('./data');
-
-const getList = () => {
-  const eventList = data.getEventList();
-
-  const events = eventList.filter(event => moment(event.endDate).diff(moment()) > 0);
-
-  return events;
-};
-
 const listEventsTags = (events) => {
   const allTags = [];
 
@@ -22,19 +10,6 @@ const listEventsTags = (events) => {
   return uniqueTags;
 };
 
-const findEventsByTag = (tag) => {
-  const events = getList();
-
-  const filteredEvents = events.filter((event) => {
-    const tagExist = event.tags.find(eventTag => eventTag.match(new RegExp(tag)));
-    return tagExist;
-  });
-
-  return filteredEvents;
-};
-
 module.exports = {
-  getList,
   listEventsTags,
-  findEventsByTag,
 };

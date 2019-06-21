@@ -1,13 +1,17 @@
+/* eslint-disable no-console */
 const TelegramBot = require('node-telegram-bot-api');
+const axios = require('axios');
 const moment = require('moment');
 
 moment.locale('pt-br');
 
 const botApiKey = require('./credentials/telegram.json').apiKey;
-const event = require('./src/event');
+const apiUrl = require('./credentials/api.json').url;
+
+const eventDao = require('./src/event');
 const state = require('./src/state');
 const subscription = require('./src/subscription');
-const tag = require('./src/tag');
+const tagDao = require('./src/tag');
 
 async function start() {
   const bot = new TelegramBot(botApiKey, { polling: true });
@@ -21,7 +25,14 @@ async function start() {
     });
   };
 
-  const askCurrentEventTags = (msg) => {
+  const tagsToReplyMarkups = (tagList) => {
+    const replyMarkups = [];
+    tagList.forEach(tagItem => replyMarkups.push([tagItem]));
+
+    return replyMarkups;
+  };
+
+  const askCurrentEventTags = async (msg) => {
     console.log('> Verificando se ja existe um userState para esse usuário.');
     let userState = state.getUserState(msg.from.id, msg.chat.id);
 
@@ -35,17 +46,20 @@ async function start() {
     }
 
     console.log('> Buscando a Lista de Eventos.');
-    const eventList = event.getList();
+    const resp = await axios.get(`${apiUrl}/events`);
+    const eventList = resp.data;
 
-    if (eventList) {
+    // const eventList = event.getList();
+
+    if (eventList && eventList.length) {
       console.log('> Salvando o userState do usuário.');
       state.saveUserState(userState);
 
       console.log('> Buscando a lista de tags existentes nos eventos.');
-      const eventTags = event.listEventsTags(eventList);
+      const eventTags = eventDao.listEventsTags(eventList);
 
       console.log('> Atualizando a lista de tags existentes.');
-      tag.updateTagList(eventTags);
+      tagDao.updateTagList(eventTags);
 
       console.log('> Transformando a lista de tags em opções de resposta.');
       const replyMarkups = tagsToReplyMarkups(eventTags);
@@ -80,7 +94,7 @@ async function start() {
     state.saveUserState(userState);
 
     console.log('> Buscando a lista de tags existentes.');
-    const tagList = tag.getList();
+    const tagList = tagDao.getList();
 
     console.log('> Transformando a lista de tags em opções de resposta.');
     const replyMarkups = tagsToReplyMarkups(tagList);
@@ -95,75 +109,58 @@ async function start() {
     });
   };
 
-  const tagsToReplyMarkups = (tagList) => {
-    const replyMarkups = [];
-    tagList.forEach(tag => replyMarkups.push([tag]));
-
-    return replyMarkups;
-  };
-
   const sendEventListByTag = async (searchTag, userState) => {
-    console.log('> Buscando a lista de eventos.');
-    const eventList = event.getList();
+    console.log(`> Buscando a lista de eventos com a tag ${searchTag}.`);
 
-    if (eventList) {
-      console.log('> Buscando a lista de tags existentes nos eventos.');
-      const eventTags = event.listEventsTags(eventList);
-      console.log(eventTags);
+    const resp = await axios.get(`${apiUrl}/events?tag=${searchTag}`);
+    const events = resp.data;
 
-      console.log(`> Verificando se a palavra informada (${searchTag}) é uma tag existente.`);
-      if (eventTags.find(eventTag => eventTag.match(new RegExp(searchTag)))) {
-        console.log(`> Tag ${searchTag} encontrada!`);
+    if (events && events.length) {
+      console.log(`> Tag ${searchTag} encontrada!`);
 
-        const events = event.findEventsByTag(searchTag);
+      let message = `Segue a lista dos eventos do tema #${searchTag}:`;
+      await bot.sendMessage(userState.chat.id, message, {
+        reply_markup: {
+          remove_keyboard: true,
+        },
+      });
 
-        let message = `Segue a lista dos eventos do tema #${searchTag}:`;
-        await bot.sendMessage(userState.chat.id, message, {
-          reply_markup: {
-            remove_keyboard: true,
-          },
+      events.forEach((event) => {
+        let eventMsg = `${moment(event.initialDate).format('LLLL')} até às ${moment(event.endDate).format('LT')} `;
+        eventMsg += `terá o evento '${event.name}' `;
+        eventMsg += `(<b>${moment(event.initialDate).fromNow()}</b>)`;
+        eventMsg += `\n<b>Local</b>: ${event.place}`;
+        eventMsg += `\n<b>Endereço:</b> ${event.address}`;
+
+        bot.sendMessage(userState.chat.id, eventMsg, {
+          parse_mode: 'HTML',
+        }).then((res) => {
+          const importantMessage = state.createImportantMessage(res, event);
+
+          userState.importantMessages.push(importantMessage);
+
+          state.saveUserState(userState);
         });
+      });
 
-        events.forEach((event) => {
-          let eventMsg = `${moment(event.initialDate).format('LLLL')} até às ${moment(event.endDate).format('LT')} `;
-          eventMsg += `terá o evento '${event.name}' `;
-          eventMsg += `(<b>${moment(event.initialDate).fromNow()}</b>)`;
-          eventMsg += `\n<b>Local</b>: ${event.place}`;
-          eventMsg += `\n<b>Endereço:</b> ${event.address}`;
+      message = 'Se quiser saber mais detalhes de algum evento, basta responder o evento desejado com o mensagem \'mais detalhes\'.';
+      bot.sendMessage(userState.chat.id, message);
 
-          bot.sendMessage(userState.chat.id, eventMsg, {
-            parse_mode: 'HTML',
-          }).then((res) => {
-            const importantMessage = state.createImportantMessage(res, event);
-
-            userState.importantMessages.push(importantMessage);
-
-            state.saveUserState(userState);
-          });
-        });
-
-        message = 'Se quiser saber mais detalhes de algum evento, basta responder o evento desejado com o mensagem \'mais detalhes\'.';
-        bot.sendMessage(userState.chat.id, message);
-
-        message = 'Se quiser receber alertas de algum evento, basta responder o evento desejado com o mensagem \'receber alertas\'.';
-        bot.sendMessage(userState.chat.id, message);
-      } else {
-        const message = `${userState.user.first_name}. No momento, não temos eventos cadastrados com o tema '#${searchTag}'.`;
-        bot.sendMessage(userState.chat.id, message);
-      }
+      message = 'Se quiser receber alertas de algum evento, basta responder o evento desejado com o mensagem \'receber alertas\'.';
+      bot.sendMessage(userState.chat.id, message);
     } else {
-      const message = `Olá ${userState.user.first_name}. No momento, não temos eventos cadastrados.`;
+      const message = `${userState.user.first_name}. No momento, não temos eventos cadastrados com o tema '#${searchTag}'.`;
       bot.sendMessage(userState.chat.id, message);
     }
   };
 
-  const handleSubscriptionTag = (subscriptionTag, userState) => {
+  const handleSubscriptionTag = async (subscriptionTag, userState) => {
     console.log('> Verificando se a informação enviada pelo usuário é uma tag válida.');
-    const tagList = tag.getList();
+    const tagList = tagDao.getList();
     if (tagList.find(tag => tag === subscriptionTag)) {
       let userSubscription = subscription.findByUserId(userState.user.id);
 
-      if (userSubscription && userSubscription.tags.find(tag => tag == subscriptionTag)) {
+      if (userSubscription && userSubscription.tags.find(tag => tag === subscriptionTag)) {
         const message = `${userState.user.first_name}, você já cadastrou alertas para os eventos do tema #${subscriptionTag}.`;
         bot.sendMessage(userState.chat.id, message, {
           reply_markup: {
@@ -177,8 +174,12 @@ async function start() {
         console.log('> Adicionando a tag na userSubscription.');
         if (subscription.addTag(userSubscription, subscriptionTag)) {
           console.log(`> Adicionando os eventos da tag '${subscriptionTag}' na userSubscription.`);
-          const events = event.findEventsByTag(subscriptionTag);
-          subscription.addEvents(userSubscription, events);
+          const resp = await axios.get(`${apiUrl}/events?tag=${subscriptionTag}`);
+          const events = resp.data;
+
+          if (events && events.length) {
+            subscription.addEvents(userSubscription, events);
+          }
 
           const message = `Pronto. Enviarei alertas para os eventos do tema #${subscriptionTag}.`;
           bot.sendMessage(userState.chat.id, message, {
@@ -209,7 +210,9 @@ async function start() {
     if (!userSubscription) {
       userSubscription = subscription.create(userState.user);
     }
-    if (userSubscription && userSubscription.subscriptionEvents.find(subEvent => subEvent.event.id == event.id)) {
+    if (userSubscription && userSubscription.subscriptionEvents
+      // eslint-disable-next-line no-underscore-dangle
+      .find(subEvent => subEvent.event._id === event._id)) {
       const message = `${userState.user.first_name}, você já cadastrou alertas para o evento '${event.name}'.`;
       bot.sendMessage(userState.chat.id, message);
     } else if (subscription.addEvent(userSubscription, event)) {
@@ -242,7 +245,7 @@ async function start() {
         let replyMsg;
         if (msg.reply_to_message) {
           replyMsg = userState.importantMessages
-            .find(iMsg => iMsg.message.message_id == msg.reply_to_message.message_id);
+            .find(iMsg => iMsg.message.message_id === msg.reply_to_message.message_id);
         }
 
         if (replyMsg && msg.text.match(/mais detalhes/)) {

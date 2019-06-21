@@ -20,7 +20,11 @@ const createImportantMessage = (msg, event) => {
     message_id, chat, date, text, entities,
   } = msg;
   const message = {
-    message_id, chat, date, text, entities,
+    message_id,
+    chat,
+    date,
+    text,
+    entities,
   };
 
   return {

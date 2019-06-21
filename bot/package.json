@@ -1,5 +1,5 @@
 {
-  "name": "issues-agenda",
+  "name": "public-agenda",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/amiltonsantana/issues-agenda.git"
+    "url": "git+https://github.com/amiltonsantana/public-agenda.git"
   },
   "keywords": [
     "agenda"
@@ -16,11 +16,17 @@
   "author": "Amilton Santana",
   "license": " GPL-3.0",
   "bugs": {
-    "url": "https://github.com/amiltonsantana/issues-agenda/issues"
+    "url": "https://github.com/amiltonsantana/public-agenda/issues"
   },
-  "homepage": "https://github.com/amiltonsantana/issues-agenda#readme",
+  "homepage": "https://github.com/amiltonsantana/public-agenda#readme",
   "dependencies": {
+    "axios": "^0.19.0",
     "moment": "^2.24.0",
     "node-telegram-bot-api": "^0.30.0"
+  },
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.17.3"
   }
 }
