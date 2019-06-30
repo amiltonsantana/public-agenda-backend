@@ -17,6 +17,7 @@ const createUserState = msg => ({
 
 const createImportantMessage = (msg, event) => {
   const {
+    // eslint-disable-next-line camelcase
     message_id, chat, date, text, entities,
   } = msg;
   const message = {
