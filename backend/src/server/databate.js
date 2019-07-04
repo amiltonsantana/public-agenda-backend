@@ -1,5 +1,17 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
-mongoose.Promise = global.Promise
+const mongodb = require('../../credentials/mongodb.json');
 
-module.exports = mongoose.connect('mongodb://localhost/public-agenda', { useNewUrlParser: true })
+mongoose.Promise = global.Promise;
+
+const {
+  username, password, host, port, database,
+} = mongodb;
+
+const options = {
+  user: username,
+  pass: password,
+  useNewUrlParser: true,
+};
+
+module.exports = mongoose.connect(`mongodb://${host}:${port}/${database}`, options);
