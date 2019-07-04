@@ -1,17 +1,19 @@
-const express = require('express')
+const express = require('express');
 
-module.exports = function (server) {
+const eventsRouter = require('../api/event/eventRoutes');
+const subscriptionsRouter = require('../api/subscription/subscriptionRoutes');
 
-	const apiRouter = express.Router()
+const routes = (server) => {
+  const apiRouter = express.Router();
 
-	// Events Routes
-	const eventsRouter = require('../api/event/eventRoutes')
-	apiRouter.use('/events', eventsRouter)
+  // Events Routes
+  apiRouter.use('/events', eventsRouter);
 
-	// // Subscriptions Routes
-	// const subscriptionsRouter = require('../api/subscription/subscriptionRoutes')
-	// apiRouter.use('/subscriptions', subscriptionsRouter)
+  // Subscriptions Routes
+  apiRouter.use('/subscriptions', subscriptionsRouter);
 
-	// API Routes
-	server.use('/api', apiRouter)
-}
+  // API Routes
+  server.use('/api', apiRouter);
+};
+
+module.exports = routes;
