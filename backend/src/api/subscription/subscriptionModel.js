@@ -13,6 +13,7 @@ const SubscriptionEvent = new mongoose.Schema({
 
 const SubscriptionSchema = new mongoose.Schema({
   user: Object,
+  userId: Number,
   tags: [String],
   subscriptionEvents: [SubscriptionEvent],
 }, {

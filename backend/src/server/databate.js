@@ -12,6 +12,7 @@ const options = {
   user: username,
   pass: password,
   useNewUrlParser: true,
+  useFindAndModify: false,
 };
 
 module.exports = mongoose.connect(`mongodb://${host}:${port}/${database}`, options);
