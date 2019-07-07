@@ -1,3 +1,5 @@
+const OFF = 0, WARN = 1, ERROR = 2;
+
 module.exports = {
   env: {
     commonjs: true,
@@ -13,5 +15,6 @@ module.exports = {
     ecmaVersion: 2018,
   },
   rules: {
+        "no-underscore-dangle": [ERROR, { "allow": ["_id"] }],
   },
 };
