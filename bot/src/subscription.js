@@ -1,15 +1,28 @@
+const axios = require('axios');
 const moment = require('moment');
 
 moment.locale('pt-br');
 
-const data = require('./data');
+const apiUrl = require('../credentials/api.json').url;
 
-const create = user => ({
-  user,
-  creationDate: moment(),
-  tags: [],
-  subscriptionEvents: [],
-});
+const create = async (user) => {
+  const subscription = {
+    user,
+    userId: user.id,
+    tags: [],
+    subscriptionEvents: [],
+  };
+
+  try {
+    const resp = await axios.post(`${apiUrl}/subscriptions`, subscription);
+    return resp.data;
+  } catch (e) {
+    console.log(`> Erro ao criar subscription para o usuário ${user.id}!`);
+    console.log(e);
+  }
+  return false;
+};
+
 
 const createSubscriptionEvent = event => ({
   event,
@@ -29,84 +42,68 @@ const createSubscriptionEvent = event => ({
   ],
 });
 
-const get = () => {
-  const subscriptions = data.loadSubscription();
+const get = async () => {
+  const resp = await axios.get(`${apiUrl}/subscriptions`);
+  return resp.data;
+};
 
-  if (!subscriptions) {
-    return [];
+const findByUserId = async (userId) => {
+  try {
+    const resp = await axios.get(`${apiUrl}/subscriptions?userId=${userId}`);
+    return resp.data;
+  } catch (e) {
+    console.log('> Usuário não tem subscription!');
   }
 
-  return subscriptions;
+  return [];
 };
 
-const findByUserId = (userId) => {
-  const subscriptions = get();
-
-  return subscriptions.find(userSubscription => userSubscription.user.id === userId);
-};
-
-// const findIndexByUserId = (userId) => {
-//   const subscriptions = get();
-
-//   return subscriptions.findIndex(userSubscription => userSubscription.user.id == userId);
-// };
-
-const add = (userSubscription) => {
-  const userSubs = userSubscription;
-  if (!userSubs || !userSubs.user) {
+const update = async (userSubscription) => {
+  if (!userSubscription || !userSubscription._id) {
     return false;
   }
-  const subscriptions = get();
 
-  const userSubscriptionIndex = subscriptions
-    .findIndex(subscription => subscription.user.id === userSubs.user.id);
-
-  userSubs.lastUpdateDate = moment();
-
-  if (userSubscriptionIndex === -1) {
-    subscriptions.push(userSubs);
-  } else {
-    subscriptions[userSubscriptionIndex] = userSubs;
-  }
-
-  data.saveSubscription(subscriptions);
-
-  return userSubs;
+  return axios.put(`${apiUrl}/subscriptions/${userSubscription._id}`, userSubscription);
 };
 
-const addTag = (userSubscription, tag) => {
-  const userSubs = userSubscription;
-  if (!tag) return false;
+const addTag = async (userSubscription, tag) => {
+  if (!tag || !userSubscription.tags) {
+    return false;
+  }
 
-  //   if (!userSubs) {
-  //     userSubs = create(user);
-  //   }
+  const userSubs = {};
+  userSubs._id = userSubscription._id;
+  userSubs.tags = userSubscription.tags;
 
   userSubs.tags.push(tag);
   userSubs.tags = [...new Set(userSubs.tags)];
 
-  add(userSubs);
+  const subscriptionUpdated = await update(userSubs);
 
-  return true;
+  return subscriptionUpdated;
 };
 
-const addEvents = (userSubscription, events) => {
+const addEvents = async (userSubscription, events) => {
   if (!userSubscription || !events || !events.length) {
     return false;
   }
 
+  const userSubs = {};
+  userSubs._id = userSubscription._id;
+  userSubs.subscriptionEvents = userSubscription.subscriptionEvents;
+
   events.forEach((event) => {
-    const subscriptionEventIndex = userSubscription
-      .subscriptionEvents.findIndex(subscriptionEvent => subscriptionEvent.event.id === event.id);
+    const subscriptionEventIndex = userSubs.subscriptionEvents
+      .findIndex(subscriptionEvent => subscriptionEvent.event.id === event.id);
 
     if (subscriptionEventIndex === -1) {
-      userSubscription.subscriptionEvents.push(createSubscriptionEvent(event));
+      userSubs.subscriptionEvents.push(createSubscriptionEvent(event));
     }
   });
 
-  add(userSubscription);
+  const subscriptionUpdated = await update(userSubs);
 
-  return true;
+  return subscriptionUpdated;
 };
 
 const addEvent = (userSubscription, event) => {
@@ -117,7 +114,7 @@ const addEvent = (userSubscription, event) => {
   return addEvents(userSubscription, [event]);
 };
 
-const removeEvent = (userSubscription, event) => {
+const removeEvent = async (userSubscription, event) => {
   if (!userSubscription || !event) {
     return false;
   }
@@ -129,7 +126,7 @@ const removeEvent = (userSubscription, event) => {
   }
   userSubscription.subscriptionEvents.splice(index, 1);
 
-  add(userSubscription);
+  await update(userSubscription);
 
   return true;
 };
@@ -145,10 +142,10 @@ const removeSubscriptionEvent = (userSubscription, subscriptionEvent) => {
 module.exports = {
   create,
   get,
-  add,
   findByUserId,
   addTag,
   addEvents,
   addEvent,
   removeSubscriptionEvent,
+  update,
 };

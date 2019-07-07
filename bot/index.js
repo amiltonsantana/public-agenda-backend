@@ -158,7 +158,7 @@ async function start() {
     console.log('> Verificando se a informação enviada pelo usuário é uma tag válida.');
     const tagList = tagDao.getList();
     if (tagList.find(tag => tag === subscriptionTag)) {
-      let userSubscription = subscription.findByUserId(userState.user.id);
+      let [userSubscription] = await subscription.findByUserId(userState.user.id);
 
       if (userSubscription && userSubscription.tags.find(tag => tag === subscriptionTag)) {
         const message = `${userState.user.first_name}, você já cadastrou alertas para os eventos do tema #${subscriptionTag}.`;
@@ -169,7 +169,7 @@ async function start() {
         });
       } else {
         if (!userSubscription) {
-          userSubscription = subscription.create(userState.user);
+          userSubscription = await subscription.create(userState.user);
         }
         console.log('> Adicionando a tag na userSubscription.');
         if (subscription.addTag(userSubscription, subscriptionTag)) {
@@ -202,21 +202,23 @@ async function start() {
     bot.sendMessage(userState.chat.id, event.description);
   };
 
-  const handleSubscriptionEvent = (event, userState) => {
+  const handleSubscriptionEvent = async (event, userState) => {
     console.log('> Cadastrando o evento no subscription do usuário.');
 
-    let userSubscription = subscription.findByUserId(userState.user.id);
+    let [userSubscription] = await subscription.findByUserId(userState.user.id);
 
     if (!userSubscription) {
-      userSubscription = subscription.create(userState.user);
+      console.log('> Criando um userSubscription');
+      userSubscription = await subscription.create(userState.user);
     }
-    if (userSubscription && userSubscription.subscriptionEvents
-      // eslint-disable-next-line no-underscore-dangle
-      .find(subEvent => subEvent.event._id === event._id)) {
+
+    if (userSubscription && userSubscription.subscriptionEvents.length
+      && userSubscription.subscriptionEvents
+        .find(subEvent => subEvent.event._id === event._id)) {
       const message = `${userState.user.first_name}, você já cadastrou alertas para o evento '${event.name}'.`;
       bot.sendMessage(userState.chat.id, message);
-    } else if (subscription.addEvent(userSubscription, event)) {
-      const message = `Pronto. Enviarei alertas para o evento '${event.name}.`;
+    } else if (userSubscription && subscription.addEvent(userSubscription, event)) {
+      const message = `Pronto. Enviarei alertas para o evento '${event.name}'.`;
       bot.sendMessage(userState.chat.id, message);
     } else {
       sendErrorMessage(bot, userState.chat.id);
