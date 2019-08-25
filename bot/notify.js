@@ -21,23 +21,21 @@ const start = async () => {
       seindex < seLenght;
       seindex += 1
     ) {
-      const subscriptionEvent = userSubscription.subscriptionEvents[seindex];
-      const { event } = subscriptionEvent;
-      const initialDate = moment(event.initialDate);
-      const daysToEvent = initialDate.diff(moment(), 'days');
-      console.log(`> Dias para o evento: ${daysToEvent}`);
+      const event = userSubscription.subscriptionEvents[seindex];
+      const startDate = moment(event.startDate);
+      const minutesToEvent = startDate.diff(moment(), 'minutes');
+      console.log(`> Minutos para o evento: ${minutesToEvent}`);
 
       let eventMessageSent = false;
 
-      if (daysToEvent >= 0) {
+      if (minutesToEvent >= 0) {
         eventMessageSent = false;
 
-        for (let index = 0, len = subscriptionEvent.alerts.length; index < len; index += 1) {
-          const alert = subscriptionEvent.alerts[index];
+        for (let index = 0, len = event.reminders.length; index < len; index += 1) {
+          const reminder = event.reminders[index];
 
-          if (daysToEvent <= alert.time && alert.messageSent === false) {
+          if (minutesToEvent <= reminder.minutes && reminder.sent === false) {
             if (!eventMessageSent) {
-              // envia evento para o usuario
               if (!userMessageSent) {
                 const message = `Olá ${userSubscription.user.first_name}. Conforme sua solicitação, segue a lista dos eventos marcados para alerta:`;
                 // eslint-disable-next-line no-await-in-loop
@@ -46,7 +44,7 @@ const start = async () => {
                 userMessageSent = true;
               }
 
-              let eventMsg = `${moment(event.initialDate).format('LLLL')} até às ${moment(event.endDate).format('LT')} terá o evento '${event.name}'`;
+              let eventMsg = `${moment(event.startDate).format('LLLL')} até às ${moment(event.endDate).format('LT')} terá o evento '${event.summary}'`;
               eventMsg += `\n<b>Local</b>: ${event.place}`;
               eventMsg += `\n<b>Endereço:</b> ${event.address}`;
 
@@ -57,13 +55,13 @@ const start = async () => {
               eventMessageSent = true;
             }
 
-            alert.messageSent = true;
+            reminder.sent = true;
           }
         }
       } else {
         console.log('> Removendo Evento passado');
 
-        subscription.removeSubscriptionEvent(userSubscription, subscriptionEvent);
+        subscription.removeSubscriptionEvent(userSubscription, event);
       }
     }
 

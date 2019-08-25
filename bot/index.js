@@ -1,12 +1,12 @@
 /* eslint-disable no-console */
 const TelegramBot = require('node-telegram-bot-api');
-const axios = require('axios');
+// const axios = require('axios');
 const moment = require('moment');
 
 moment.locale('pt-br');
 
 const botApiKey = require('./credentials/telegram.json').apiKey;
-const apiUrl = require('./credentials/api.json').url;
+// const apiUrl = require('./credentials/api.json').url;
 
 const eventDao = require('./src/event');
 const state = require('./src/state');
@@ -46,10 +46,7 @@ async function start() {
     }
 
     console.log('> Buscando a Lista de Eventos.');
-    const resp = await axios.get(`${apiUrl}/events`);
-    const eventList = resp.data;
-
-    // const eventList = event.getList();
+    const eventList = eventDao.listEvents();
 
     if (eventList && eventList.length) {
       console.log('> Salvando o userState do usuário.');
@@ -72,7 +69,7 @@ async function start() {
         },
       });
     } else {
-      const message = `Olá ${userState.chat.id}. No momento, não temos eventos cadastrados.`;
+      const message = `Olá ${userState.user.first_name}. No momento, não temos eventos cadastrados.`;
       bot.sendMessage(userState.chat.id, message);
     }
   };
@@ -112,8 +109,7 @@ async function start() {
   const sendEventListByTag = async (searchTag, userState) => {
     console.log(`> Buscando a lista de eventos com a tag ${searchTag}.`);
 
-    const resp = await axios.get(`${apiUrl}/events?tag=${searchTag}`);
-    const events = resp.data;
+    const events = await eventDao.findByTag(searchTag);
 
     if (events && events.length) {
       console.log(`> Tag ${searchTag} encontrada!`);
@@ -126,9 +122,9 @@ async function start() {
       });
 
       events.forEach((event) => {
-        let eventMsg = `${moment(event.initialDate).format('LLLL')} até às ${moment(event.endDate).format('LT')} `;
-        eventMsg += `terá o evento '${event.name}' `;
-        eventMsg += `(<b>${moment(event.initialDate).fromNow()}</b>)`;
+        let eventMsg = `${moment(event.startDate).format('LLLL')} até às ${moment(event.endDate).format('LT')} `;
+        eventMsg += `terá o evento '${event.summary}' `;
+        eventMsg += `(<b>${moment(event.startDate).fromNow()}</b>)`;
         eventMsg += `\n<b>Local</b>: ${event.place}`;
         eventMsg += `\n<b>Endereço:</b> ${event.address}`;
 
@@ -174,8 +170,7 @@ async function start() {
         console.log('> Adicionando a tag na userSubscription.');
         if (subscription.addTag(userSubscription, subscriptionTag)) {
           console.log(`> Adicionando os eventos da tag '${subscriptionTag}' na userSubscription.`);
-          const resp = await axios.get(`${apiUrl}/events?tag=${subscriptionTag}`);
-          const events = resp.data;
+          const events = eventDao.listEventsTags(subscriptionTag);
 
           if (events && events.length) {
             subscription.addEvents(userSubscription, events);
@@ -214,11 +209,11 @@ async function start() {
 
     if (userSubscription && userSubscription.subscriptionEvents.length
       && userSubscription.subscriptionEvents
-        .find(subEvent => subEvent.event._id === event._id)) {
-      const message = `${userState.user.first_name}, você já cadastrou alertas para o evento '${event.name}'.`;
+        .find(subEvent => subEvent._id === event._id)) {
+      const message = `${userState.user.first_name}, você já cadastrou alertas para o evento '${event.summary}'.`;
       bot.sendMessage(userState.chat.id, message);
     } else if (userSubscription && subscription.addEvent(userSubscription, event)) {
-      const message = `Pronto. Enviarei alertas para o evento '${event.name}'.`;
+      const message = `Pronto. Enviarei alertas para o evento '${event.summary}'.`;
       bot.sendMessage(userState.chat.id, message);
     } else {
       sendErrorMessage(bot, userState.chat.id);
@@ -250,9 +245,9 @@ async function start() {
             .find(iMsg => iMsg.message.message_id === msg.reply_to_message.message_id);
         }
 
-        if (replyMsg && msg.text.match(/mais detalhes/)) {
+        if (replyMsg && msg.text.match(/mais detalhes/i)) {
           sendEventDetail(replyMsg.event, userState);
-        } else if (replyMsg && msg.text.match(/receber alertas/)) {
+        } else if (replyMsg && msg.text.match(/receber alertas/i)) {
           handleSubscriptionEvent(replyMsg.event, userState);
         } else if (userState.context.subject === '/eventos') {
           sendEventListByTag(msg.text, userState);

@@ -15,27 +15,7 @@ eventsRouter.get('/', async (req, res) => {
 });
 
 eventsRouter.post('/', async (req, res) => {
-  const {
-    name,
-    description,
-    place,
-    address,
-    initialDate,
-    endDate,
-    tags,
-    link,
-  } = req.body;
-
-  const post = await Event.create({
-    name,
-    description,
-    place,
-    address,
-    initialDate,
-    endDate,
-    tags,
-    link,
-  });
+  const post = await Event.create(req.body);
 
   res.json(post);
 });
