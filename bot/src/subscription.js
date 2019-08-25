@@ -24,23 +24,27 @@ const create = async (user) => {
 };
 
 
-const createSubscriptionEvent = event => ({
-  event,
-  alerts: [
+const createSubscriptionEvent = (event) => {
+  const subEvent = event;
+  subEvent.reminders = [
     {
-      time: 1,
-      messageSent: false,
+      method: 'TELEGRAM',
+      minutes: 1 * 60 * 24,
+      sent: false,
     },
     {
-      time: 7,
-      messageSent: false,
+      method: 'TELEGRAM',
+      minutes: 7 * 60 * 24,
+      sent: false,
     },
     {
-      time: 30,
-      messageSent: false,
+      method: 'TELEGRAM',
+      minutes: 30 * 60 * 24,
+      sent: false,
     },
-  ],
-});
+  ];
+  return subEvent;
+};
 
 const get = async () => {
   const resp = await axios.get(`${apiUrl}/subscriptions`);
@@ -94,7 +98,7 @@ const addEvents = async (userSubscription, events) => {
 
   events.forEach((event) => {
     const subscriptionEventIndex = userSubs.subscriptionEvents
-      .findIndex(subscriptionEvent => subscriptionEvent.event.id === event.id);
+      .findIndex(subscriptionEvent => subscriptionEvent._id === event._id);
 
     if (subscriptionEventIndex === -1) {
       userSubs.subscriptionEvents.push(createSubscriptionEvent(event));
@@ -119,7 +123,7 @@ const removeEvent = async (userSubscription, event) => {
     return false;
   }
 
-  const index = userSubscription.subscriptionEvents.findIndex(se => se.event.id === event.id);
+  const index = userSubscription.subscriptionEvents.findIndex(se => se.event._id === event._id);
 
   if (index === -1) {
     return false;

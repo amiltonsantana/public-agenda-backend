@@ -15,8 +15,6 @@ const loadJsonObject = (filePath) => {
   return false;
 };
 
-const getEventList = () => loadJsonObject(`${DATA_PATH}/events.json`);
-
 const saveUserState = (userState, userId, charId) => {
   saveJsonObject(userState, `${DATA_PATH}/${userId}-${charId}-state.json`);
 };
@@ -29,18 +27,9 @@ const saveTagList = (tagList) => {
   saveJsonObject(tagList, `${DATA_PATH}/tags.json`);
 };
 
-const loadSubscription = () => loadJsonObject(`${DATA_PATH}/subscriptions.json`);
-
-const saveSubscription = (subscription) => {
-  saveJsonObject(subscription, `${DATA_PATH}/subscriptions.json`);
-};
-
 module.exports = {
-  getEventList,
   saveUserState,
   loadUserState,
   getTagList,
   saveTagList,
-  loadSubscription,
-  saveSubscription,
 };
