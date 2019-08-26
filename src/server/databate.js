@@ -15,4 +15,12 @@ const options = {
   useFindAndModify: false,
 };
 
-module.exports = mongoose.connect(`mongodb://${host}:${port}/${database}`, options);
+let mongoConnection;
+
+if (process.env.MONGODB_CONNECTION) {
+  mongoConnection = mongoose.connect(process.env.MONGODB_CONNECTION, { useNewUrlParser: true });
+} else {
+  mongoConnection = mongoose.connect(`mongodb://${host}:${port}/${database}`, options);
+}
+
+module.exports = mongoConnection;
