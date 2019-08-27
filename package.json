@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon src/loader.js",
     "prod": "pm2 start src/loader.js --name public-agenda-backend",
+    "start": "node src/loader.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
