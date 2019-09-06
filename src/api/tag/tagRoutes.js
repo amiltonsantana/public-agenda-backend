@@ -6,7 +6,7 @@ const tagsRouter = express.Router();
 tagsRouter.get('/', async (req, res) => {
   const query = {};
   if (req.query.tag) {
-    query.tags = req.query.tag;
+    query.tag = req.query.tag.split(',');
   }
   const tagList = await Tag.find(query);
   res.json(tagList);
@@ -15,9 +15,14 @@ tagsRouter.get('/', async (req, res) => {
 });
 
 tagsRouter.post('/', async (req, res) => {
-  const post = await Tag.create(req.body);
+  const tag = req.body;
 
-  res.json(post);
+  const post = await Tag.updateOne(tag, tag, { upsert: true });
+
+  if (post.nModified === 1 || post.upserted) {
+    return res.status(200).send();
+  }
+  return res.status(500).json(post);
 });
 
 module.exports = tagsRouter;
