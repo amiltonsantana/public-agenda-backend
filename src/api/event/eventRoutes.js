@@ -8,6 +8,9 @@ eventsRouter.get('/', async (req, res) => {
   if (req.query.tag) {
     query.tags = req.query.tag;
   }
+  if (req.query.currentEvents) {
+    query.startDate = { $gte: new Date() };
+  }
   const eventList = await Event.find(query);
   res.json(eventList);
 
